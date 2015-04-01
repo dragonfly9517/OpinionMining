@@ -1,4 +1,5 @@
 import re
+from stemming.porter2 import stem
 
 pos = open('positive-words.txt', 'r+')
 neg = open('negative-words.txt', 'r+')
@@ -10,8 +11,17 @@ neg = [line.strip() for line in open('negative-words.txt')]
 inc = [line.strip() for line in open('increasingorder.txt')]
 dec = [line.strip() for line in open('decreasingorder.txt')]
 
+for i in range (len(pos)):
+	pos[i]=stem(pos[i])
+for i in range (len(neg)):
+	neg[i]=stem(neg[i])
+for i in range (len(inc)):
+	inc[i]=stem(inc[i])
+for i in range (len(dec)):
+	dec[i]=stem(dec[i])
+
 lineno = 1
-outfile = open('Output.txt', 'r+')
+outfile = open('Output.txt', 'w')
 
 with open('input.txt') as input:
 
@@ -101,61 +111,138 @@ with open('input.txt') as input:
 		en2 = word2[0]
 
 		#Handling exception: more than one c or f
+		if len(word4)>1:
+			foo = 0
+			while foo < len(word4):
+				if stem(word4[foo]) in pos or stem(word4[foo]) in neg:
+					c = word4[foo]
+					break
+				foo = foo + 1
+			if foo == len(word4):
+				c= word4[0]
+		elif len(word4)==1:
+			c = word4[0]
+		else:
+			c = ''
+		
+		if len(word3)==0 and len(word4)>0:
+			if stem(word4[0]) in pos:
+				outfile.write(str(lineno)+'_'+ word1[0]+'\n')
+			elif stem(word4[0]) in neg:
+				outfile.write(str(lineno)+'_'+ word2[0]+'\n')
+			lineno = lineno + 1
+			continue
+
 		if len(word3)>1:
 			foo = 0
 			while foo < len(word3):
-				if word3[foo] in pos or word3[foo] in neg:
-					c = word3[foo]
+				if stem(word3[foo]) in pos or stem(word3[foo]) in neg:
+					f= word3[foo]
 					break
 				foo = foo + 1
 			if foo == len(word3):
-				c= ''
+				f= word3[0]
 		elif len(word3)==1:
-			c = word3[0]
-		else:
-			c = ''
-
-
-		if len(word4)>1:
-			f = word4[0]
-		elif len(word4) == 1:
-			f = word4[0]
+			f= word3[0]
 		else:
 			f = ''
-
-
-
-
-
-
-
-		if c in pos:
-			if f in inc:
-				print en2
-				outfile.write(str(lineno) + '_' +  en2 + '\n')
-			elif f in dec:
-				print en1
-				outfile.write(str(lineno) + '_' +  en1 + '\n')
-			else:
-				print 'No match found'
-				outfile.write(str(lineno)+'_notmatch_(1_<'+ en1+'>2_<'+en2+'>3_<'+c+'>4_<'+f+'>')
-				outfile.write("\n")
-
-
-		elif c in neg:
-			if f in inc:
-				print en1
-				outfile.write(str(lineno) + '_' +  en1 + '\n')
-			elif f in dec:
-				print en2
-				ooutfile.write(str(lineno) + '_' +  en2 + '\n')
-			else:
-				print 'No match found'
-				outfile.write(str(lineno)+ '_notmatch_(1_<' + en1+ '>2_<'+en2+'>3_<'+c+'>4_<'+f+'>')
-				outfile.write("\n")
+		if stem(c) in pos:
+			print en1
+			outfile.write(str(lineno)+'_'+en1+'\n')
+		elif stem(c) in neg:
+			print en2
+			outfile.write(str(lineno)+'_'+en2+'\n')
 		else:
-			print 'No match found'
-			outfile.write(str(lineno)+'_notmatch_(1_<'+ en1+'>2_<'+en2+'>3_<'+c+'>4_<'+f+'>')
-			outfile.write("\n")
+			if stem(f) in pos:
+				if stem(c) in inc:
+					print en2
+					outfile.write(str(lineno) + '_' +  en2 + '\n')
+				elif stem(c) in dec:
+					print en1
+					outfile.write(str(lineno) + '_' +  en1 + '\n')
+				else:
+					print 'No match found'
+					outfile.write(str(lineno)+'_notmatch_(1_<')
+					st=''
+					for s in word1:
+						st=st+s
+						st=st+','
+					outfile.write(st[:-1])
+					outfile.write('>2_<')
+					st=''
+					for s in word2:
+						st=st+s
+						st=st+','
+					outfile.write(st[:-1])
+					outfile.write('>3_<')
+					st=''
+					for s in word3:
+						st=st+s
+						st=st+','
+					outfile.write(st[:-1])
+					outfile.write('>4_<')
+					for s in word4:
+						outfile.write(s)
+					outfile.write('>')
+					outfile.write("\n")
+
+
+			elif stem(f) in neg:
+				if stem(c) in inc:
+					print en1
+					outfile.write(str(lineno) + '_' +  en1 + '\n')
+				elif stem(c) in dec:
+					print en2
+					outfile.write(str(lineno) + '_' +  en2 + '\n')
+				else:
+					print 'No match found'
+					outfile.write(str(lineno)+'_notmatch_(1_<')
+					st=''
+					for s in word1:
+						st=st+s
+						st=st+','
+					outfile.write(st[:-1])
+					outfile.write('>2_<')
+					st=''
+					for s in word2:
+						st=st+s
+						st=st+','
+					outfile.write(st[:-1])
+					outfile.write('>3_<')
+					st=''
+					for s in word3:
+						st=st+s
+						st=st+','
+					outfile.write(st[:-1])
+					outfile.write('>4_<')
+					for s in word4:
+						outfile.write(s)
+					outfile.write('>')
+					outfile.write("\n")
+			else:
+				print 'No match found'
+				outfile.write(str(lineno)+'_notmatch_(1_<')
+				st=''
+				for s in word1:
+					st=st+s
+					st=st+','
+				outfile.write(st[:-1])
+				outfile.write('>2_<')
+				st=''
+				for s in word2:
+					st=st+s
+					st=st+','
+				outfile.write(st[:-1])
+				outfile.write('>3_<')
+				st=''
+				for s in word3:
+					st=st+s
+					st=st+','
+				outfile.write(st[:-1])
+				outfile.write('>4_<')
+				for s in word4:
+					outfile.write(s)
+				outfile.write('>')
+				outfile.write("\n")
 
 		lineno = lineno+1
